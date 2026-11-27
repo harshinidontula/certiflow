@@ -12,7 +12,7 @@ import {
   ChevronRight,
   QrCode
 } from 'lucide-react';
-import type { FieldConfig } from './TemplateEditorStep';
+import { getFontFamilyStyle, type FieldConfig } from './TemplateEditorStep';
 
 interface DataMappingStepProps {
   template: any;
@@ -81,10 +81,42 @@ export const DataMappingStep: React.FC<DataMappingStepProps> = ({
 
   // Resolve preview text for a field using sample row data
   const getFieldPreviewValue = (f: FieldConfig): string => {
+    let formattedDate = issueDate;
+    if (issueDate && issueDate.includes('-')) {
+      try {
+        const [y, m, d] = issueDate.split('-');
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const mIdx = parseInt(m, 10) - 1;
+        const dInt = parseInt(d, 10);
+        const suffix = dInt >= 11 && dInt <= 13 ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][dInt % 10];
+        if (mIdx >= 0 && mIdx < 12) {
+          formattedDate = `${dInt}${suffix} ${months[mIdx]}, ${y}`;
+        }
+      } catch (e) {
+        // keep raw
+      }
+    }
+
+    const sampleName = currentSampleRow[mapping['name'] || ''] || currentSampleRow['Full_Name'] || currentSampleRow['Name'] || currentSampleRow['Participant_Name'] || 'Kavya';
+
+    if (f.fixed_text) {
+      let val = f.fixed_text;
+      val = val.replace(/\{\{name\}\}/gi, sampleName);
+      val = val.replace(/\{\{participant_name\}\}/gi, sampleName);
+      val = val.replace(/\{\{certificate_id\}\}/gi, 'CERT-2026-X8K9M2');
+      val = val.replace(/\{\{event\}\}/gi, eventName);
+      val = val.replace(/\{\{event_name\}\}/gi, eventName);
+      val = val.replace(/\{\{date\}\}/gi, formattedDate);
+      val = val.replace(/\{\{issue_date\}\}/gi, formattedDate);
+      val = val.replace(/\{\{year\}\}/gi, issueDate.slice(0, 4) || '2026');
+      return val;
+    }
+
+    if (f.field_key === 'name') return sampleName;
+    if (f.field_key === 'event_name' || f.field_key === 'event') return `“${eventName}”`;
+    if (f.field_key === 'issue_date' || f.field_key === 'date') return `on ${formattedDate}`;
     if (f.field_key === 'certificate_id') return 'CERT-2026-X8K9M2';
-    if (f.field_key === 'event_name') return eventName;
-    if (f.field_key === 'issue_date') return issueDate;
-    if (f.field_key === 'organization_name') return 'Global Institute of Technology';
+    if (f.field_key === 'organization_name') return 'Pragati University';
 
     const mappedCol = mapping[f.field_key];
     if (mappedCol && currentSampleRow[mappedCol]) {
@@ -287,15 +319,31 @@ export const DataMappingStep: React.FC<DataMappingStepProps> = ({
                     left: `${f.x}%`,
                     top: `${f.y}%`,
                     transform: f.align === 'center' ? 'translate(-50%, -50%)' : f.align === 'right' ? 'translate(-100%, -50%)' : 'translate(0%, -50%)',
-                    fontFamily: f.font_family,
+                    fontFamily: getFontFamilyStyle(f.font_family),
                     fontSize: `${Math.max(9, f.font_size * 0.72)}px`,
                     color: f.color,
                     fontWeight: f.bold ? 'bold' : 'normal',
                     fontStyle: f.italic ? 'italic' : 'normal',
                     textAlign: f.align,
                   }}
-                  className="pointer-events-none px-1"
+                  className="pointer-events-none px-1 select-none relative"
                 >
+                  {/* Clean Background Mask */}
+                  {f.mask_unwanted_text && (
+                    <div
+                      className="absolute rounded shadow-xs"
+                      style={{
+                        backgroundColor: f.mask_color || '#FAF7F2',
+                        minWidth: `${f.mask_width ? `${f.mask_width * 4}px` : '160px'}`,
+                        height: `${f.mask_height ? `${f.mask_height * 0.8}px` : '100%'}`,
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: -1,
+                      }}
+                    />
+                  )}
+
                   {f.is_qr ? (
                     <div
                       className="border border-indigo-500/40 rounded flex flex-col items-center justify-center p-1 bg-white shadow-xs"
@@ -304,7 +352,7 @@ export const DataMappingStep: React.FC<DataMappingStepProps> = ({
                       <QrCode className="w-full h-full text-indigo-950" />
                     </div>
                   ) : (
-                    <span>{displayVal}</span>
+                    <span className="whitespace-nowrap">{displayVal}</span>
                   )}
                 </div>
               );

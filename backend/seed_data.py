@@ -183,6 +183,111 @@ def seed_database():
         template.background_preview_url = f"/uploads/templates/{bg_file}"
         db.commit()
 
+    # 3b. Seed Pragati University Certificate Template
+    pragati_bg = "pragati_university_certificate.jpg"
+    pragati_path = os.path.join(TEMPLATES_DIR, pragati_bg)
+    if os.path.exists(pragati_path):
+        pragati_template = db.query(models.Template).filter(models.Template.background_filename == pragati_bg).first()
+        pragati_fields = [
+            {
+                "id": "f_name_pragati",
+                "label": "Participant Name",
+                "field_key": "name",
+                "fixed_text": "{{name}}",
+                "font_family": "GreatVibes",
+                "font_size": 44,
+                "color": "#785935",
+                "bold": False,
+                "italic": False,
+                "align": "center",
+                "x": 50.0,
+                "y": 43.5,
+                "mask_unwanted_text": True,
+                "mask_width": 54.0,
+                "mask_height": 48.0,
+                "mask_color": "#FAF7F2"
+            },
+            {
+                "id": "f_event_pragati",
+                "label": "Event Name",
+                "field_key": "event_name",
+                "fixed_text": "“{{event}}”",
+                "font_family": "Times",
+                "font_size": 18,
+                "color": "#0B1B3D",
+                "bold": True,
+                "italic": False,
+                "align": "center",
+                "x": 50.0,
+                "y": 56.5,
+                "mask_unwanted_text": True,
+                "mask_width": 28.0,
+                "mask_height": 28.0,
+                "mask_color": "#FAF7F2"
+            },
+            {
+                "id": "f_date_pragati",
+                "label": "Issue Date",
+                "field_key": "issue_date",
+                "fixed_text": "on {{date}}",
+                "font_family": "Times",
+                "font_size": 14,
+                "color": "#1E293B",
+                "bold": False,
+                "italic": False,
+                "align": "center",
+                "x": 50.0,
+                "y": 66.8,
+                "mask_unwanted_text": True,
+                "mask_width": 28.0,
+                "mask_height": 24.0,
+                "mask_color": "#FAF7F2"
+            },
+            {
+                "id": "f_id_pragati",
+                "label": "Certificate ID",
+                "field_key": "certificate_id",
+                "fixed_text": "{{certificate_id}}",
+                "font_family": "Courier",
+                "font_size": 9,
+                "color": "#FFFFFF",
+                "bold": True,
+                "italic": False,
+                "align": "center",
+                "x": 11.5,
+                "y": 94.5,
+                "mask_unwanted_text": False
+            },
+            {
+                "id": "f_qr_pragati",
+                "label": "Verification QR Code",
+                "field_key": "qr_code",
+                "x": 88.5,
+                "y": 80.0,
+                "is_qr": True,
+                "qr_size": 44,
+                "align": "center"
+            }
+        ]
+        if not pragati_template:
+            pragati_template = models.Template(
+                name="Pragati University Certificate",
+                orientation="landscape",
+                width=1024,
+                height=682,
+                background_filename=pragati_bg,
+                background_preview_url=f"/uploads/templates/{pragati_bg}",
+                fields_config=json.dumps(pragati_fields),
+                user_id=user.id,
+                organization_id=org.id
+            )
+            db.add(pragati_template)
+            db.commit()
+            db.refresh(pragati_template)
+        else:
+            pragati_template.fields_config = json.dumps(pragati_fields)
+            db.commit()
+
     # 4. Default Project with Participants
     project = db.query(models.Project).first()
     if not project:

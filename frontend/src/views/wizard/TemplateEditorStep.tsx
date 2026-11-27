@@ -49,21 +49,53 @@ interface TemplateEditorStepProps {
   initialTemplateId?: number;
 }
 
+export const getFontFamilyStyle = (font: string) => {
+  const fLower = (font || '').toLowerCase();
+  if (fLower.includes('great') || fLower.includes('vibe') || fLower.includes('script') || fLower.includes('calligraph') || fLower.includes('cursive')) {
+    return "'Great Vibes', cursive, 'Times New Roman'";
+  }
+  if (fLower.includes('times') || fLower.includes('serif')) {
+    return "'Times New Roman', 'Playfair Display', serif";
+  }
+  if (fLower.includes('courier') || fLower.includes('mono')) {
+    return "'Courier New', Courier, monospace";
+  }
+  return "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+};
+
 const DEFAULT_FIELDS: FieldConfig[] = [
   {
     id: 'f_name',
     label: 'Participant Name',
     field_key: 'name',
     fixed_text: '{{name}}',
-    mask_unwanted_text: false,
-    mask_width: 50,
+    mask_unwanted_text: true,
+    mask_width: 44,
     mask_height: 38,
-    mask_color: '#FFFFFF',
+    mask_color: '#FAF7F2',
     x: 50,
-    y: 46,
+    y: 43.5,
+    font_family: 'GreatVibes',
+    font_size: 42,
+    color: '#785935',
+    align: 'center',
+    bold: false,
+    italic: false,
+  },
+  {
+    id: 'f_event',
+    label: 'Event Name',
+    field_key: 'event_name',
+    fixed_text: '“{{event}}”',
+    mask_unwanted_text: true,
+    mask_width: 36,
+    mask_height: 28,
+    mask_color: '#FAF7F2',
+    x: 50,
+    y: 56.5,
     font_family: 'Times',
-    font_size: 34,
-    color: '#1E293B',
+    font_size: 18,
+    color: '#0B1B3D',
     align: 'center',
     bold: true,
     italic: false,
@@ -72,13 +104,16 @@ const DEFAULT_FIELDS: FieldConfig[] = [
     id: 'f_date',
     label: 'Issue Date',
     field_key: 'issue_date',
-    fixed_text: '{{date}}',
-    mask_unwanted_text: false,
-    x: 24,
-    y: 78,
-    font_family: 'Helvetica',
-    font_size: 13,
-    color: '#475569',
+    fixed_text: 'on {{date}}',
+    mask_unwanted_text: true,
+    mask_width: 32,
+    mask_height: 22,
+    mask_color: '#FAF7F2',
+    x: 50,
+    y: 66.8,
+    font_family: 'Times',
+    font_size: 14,
+    color: '#1E293B',
     align: 'center',
     bold: false,
     italic: false,
@@ -89,11 +124,11 @@ const DEFAULT_FIELDS: FieldConfig[] = [
     field_key: 'certificate_id',
     fixed_text: '{{certificate_id}}',
     mask_unwanted_text: false,
-    x: 76,
-    y: 78,
+    x: 11.5,
+    y: 93,
     font_family: 'Courier',
-    font_size: 11,
-    color: '#64748B',
+    font_size: 10,
+    color: '#FFFFFF',
     align: 'center',
     bold: true,
     italic: false,
@@ -103,9 +138,9 @@ const DEFAULT_FIELDS: FieldConfig[] = [
     label: 'Verification QR Code',
     field_key: 'qr_code',
     x: 50,
-    y: 78,
+    y: 88,
     is_qr: true,
-    qr_size: 65,
+    qr_size: 48,
     font_family: 'Helvetica',
     font_size: 12,
     color: '#000000',
@@ -365,14 +400,19 @@ export const TemplateEditorStep: React.FC<TemplateEditorStepProps> = ({
   const getCanvasDisplayText = (f: FieldConfig) => {
     if (f.fixed_text) {
       return f.fixed_text
-        .replace('{{name}}', 'Alexander Wright')
+        .replace('{{name}}', 'Kavya')
+        .replace('{{participant_name}}', 'Kavya')
         .replace('{{certificate_id}}', 'CERT-2026-X8K9M2')
-        .replace('{{event}}', 'National AI Hackathon')
-        .replace('{{date}}', '2026-11-27');
+        .replace('{{event}}', 'National AI Hackathon 2026')
+        .replace('{{event_name}}', 'National AI Hackathon 2026')
+        .replace('{{date}}', '27th November, 2026')
+        .replace('{{issue_date}}', '27th November, 2026')
+        .replace('{{year}}', '2026');
     }
-    if (f.field_key === 'name') return 'Alexander Wright';
+    if (f.field_key === 'name') return 'Kavya';
+    if (f.field_key === 'event_name' || f.field_key === 'event') return '“National AI Hackathon 2026”';
+    if (f.field_key === 'issue_date' || f.field_key === 'date') return 'on 27th November, 2026';
     if (f.field_key === 'certificate_id') return 'CERT-2026-X8K9M2';
-    if (f.field_key === 'issue_date') return '2026-11-27';
     return f.label;
   };
 
@@ -458,7 +498,7 @@ export const TemplateEditorStep: React.FC<TemplateEditorStepProps> = ({
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => runAiAgent('Auto-detect unwanted placeholders like participant name and replace with clean dynamic field')}
+              onClick={() => runAiAgent('Auto-detect unwanted placeholders (Participant Name, Event Name, Date) and replace with clean dynamic fields matching original fonts: GreatVibes Calligraphy for Name, Times-Bold Serif for Event, and Times for Date with ivory masks')}
               disabled={isAiRunning}
               className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md hover:opacity-95 active:scale-98 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
               style={{ background: 'var(--primary-gradient)' }}
@@ -468,7 +508,7 @@ export const TemplateEditorStep: React.FC<TemplateEditorStepProps> = ({
               ) : (
                 <Sparkles className="w-3.5 h-3.5" />
               )}
-              <span>{isAiRunning ? 'AI Cleaning...' : 'AI Detect & Fix Unwanted Placeholders'}</span>
+              <span>{isAiRunning ? 'AI Matching...' : 'AI Detect & Replace Unwanted Texts (Name, Event, Date)'}</span>
             </button>
           </div>
         </div>
@@ -562,7 +602,7 @@ export const TemplateEditorStep: React.FC<TemplateEditorStepProps> = ({
                     left: `${f.x}%`,
                     top: `${f.y}%`,
                     transform: f.align === 'center' ? 'translate(-50%, -50%)' : f.align === 'right' ? 'translate(-100%, -50%)' : 'translate(0%, -50%)',
-                    fontFamily: f.font_family,
+                    fontFamily: getFontFamilyStyle(f.font_family),
                     fontSize: `${Math.max(10, f.font_size * 0.75)}px`,
                     color: f.color,
                     fontWeight: f.bold ? 'bold' : 'normal',
@@ -576,12 +616,14 @@ export const TemplateEditorStep: React.FC<TemplateEditorStepProps> = ({
                   {/* Clean Background Mask (Erases unwanted dummy text under this spot if enabled) */}
                   {f.mask_unwanted_text && (
                     <div
-                      className="absolute inset-0 -m-1 rounded shadow-xs pointer-events-none"
+                      className="absolute rounded shadow-xs pointer-events-none"
                       style={{
-                        backgroundColor: f.mask_color || '#FFFFFF',
-                        minWidth: `${f.mask_width ? (f.mask_width * 3) : 120}px`,
+                        backgroundColor: f.mask_color || '#FAF7F2',
+                        minWidth: `${f.mask_width ? `${f.mask_width * 4.5}px` : '180px'}`,
+                        height: `${f.mask_height ? `${f.mask_height * 0.85}px` : '100%'}`,
+                        top: '50%',
                         left: '50%',
-                        transform: 'translateX(-50%)',
+                        transform: 'translate(-50%, -50%)',
                         zIndex: -1,
                       }}
                     />
@@ -870,9 +912,10 @@ export const TemplateEditorStep: React.FC<TemplateEditorStepProps> = ({
                       className="w-full px-3 py-1.5 rounded-xl border bg-[var(--bg-surface)] text-[var(--text-primary)] font-medium"
                       style={{ borderColor: 'var(--border-color)' }}
                     >
-                      <option value="Times">Times Roman (Classic Serif)</option>
-                      <option value="Helvetica">Helvetica / Arial (Modern Clean)</option>
-                      <option value="Courier">Courier (Digital / Monospace)</option>
+                      <option value="GreatVibes">Great Vibes (Certificate Calligraphy Script - matches name)</option>
+                      <option value="Times">Times Roman (Classic Serif - matches event & date)</option>
+                      <option value="Helvetica">Helvetica / Arial (Modern Clean Sans)</option>
+                      <option value="Courier">Courier (Digital / Monospace ID)</option>
                     </select>
                   </div>
 

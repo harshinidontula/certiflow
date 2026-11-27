@@ -59,8 +59,11 @@ def generate_batch(
         field_values = {
             "name": part.name,
             "email": part.email or "",
+            "event": project.event_name,
             "event_name": project.event_name,
+            "date": project.issue_date,
             "issue_date": project.issue_date,
+            "year": project.issue_date[:4] if project.issue_date else "2026",
             "organization_name": org_name,
             "designation": raw_data.get("Designation", raw_data.get("Role", "Participant"))
         }
@@ -237,8 +240,11 @@ def regenerate_certificate(
     field_values = {
         "name": cert.participant_name,
         "email": cert.participant_email or "",
+        "event": cert.event_name,
         "event_name": cert.event_name,
+        "date": cert.issue_date,
         "issue_date": cert.issue_date,
+        "year": cert.issue_date[:4] if cert.issue_date else "2026",
         "organization_name": cert.organization_name or (user.organization.name if user.organization else "CertiFlow Org"),
     }
 

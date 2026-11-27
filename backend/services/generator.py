@@ -9,8 +9,19 @@ import qrcode
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
 from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 from database import CERTIFICATES_DIR, EXPORTS_DIR
+
+# Register Custom Certificate Fonts (GreatVibes Calligraphy Script)
+FONTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fonts")
+great_vibes_path = os.path.join(FONTS_DIR, "GreatVibes-Regular.ttf")
+if os.path.exists(great_vibes_path):
+    try:
+        pdfmetrics.registerFont(TTFont("GreatVibes", great_vibes_path))
+    except Exception as e:
+        print(f"GreatVibes font registration note: {e}")
 
 def generate_unique_certificate_id() -> str:
     short_uuid = uuid.uuid4().hex[:6].upper()
@@ -127,31 +138,68 @@ def render_single_certificate(
 
         # 2a. Mask Unwanted Text if enabled (covers unwanted placeholder on background)
         if field.get("mask_unwanted_text"):
-            mask_w_pct = float(field.get("mask_width", 50.0))
-            mask_w_pt = (mask_w_pct / 100.0) * page_width
-            mask_h_pt = float(field.get("mask_height", 38.0))
-            mask_color_hex = field.get("mask_color", "#FCFCFD")
+            mask_w_val = float(field.get("mask_width", 45.0))
+            mask_w_pt = (mask_w_val / 100.0) * page_width if mask_w_val <= 100 else mask_w_val
+
+            mask_h_val = float(field.get("mask_height", 8.0))
+            if mask_h_val > 15.0:
+                mask_h_pt = mask_h_val * (page_height / 560.0)
+            else:
+                mask_h_pt = (mask_h_val / 100.0) * page_height
+
+            mask_color_hex = field.get("mask_color", "#FAF7F2")
             try:
                 c.setFillColor(HexColor(mask_color_hex))
                 c.setStrokeColor(HexColor(mask_color_hex))
-                c.rect(x_pt - (mask_w_pt / 2.0), y_pt - (mask_h_pt / 2.0) + 4, mask_w_pt, mask_h_pt, fill=1, stroke=0)
+                c.rect(x_pt - (mask_w_pt / 2.0), y_pt - (mask_h_pt / 2.0) - 2, mask_w_pt, mask_h_pt, fill=1, stroke=0)
             except Exception as ex:
                 print(f"Mask render note: {ex}")
 
         # 2b. Resolve Text Value (supports user fixed text box and dynamic tokens)
         text_val = ""
+        raw_date = str(field_data.get("issue_date", field_data.get("date", "")))
+        event_str = str(field_data.get("event_name", field_data.get("event", "")))
+        year_str = ""
+        formatted_date = raw_date
+
+        if raw_date and "-" in raw_date:
+            try:
+                parts = raw_date.split("-")
+                if len(parts) == 3:
+                    y, m, d = parts
+                    year_str = y
+                    months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+                    m_idx = int(m) - 1
+                    day_int = int(d)
+                    suffix = "th" if 11 <= day_int <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day_int % 10, "th")
+                    if 0 <= m_idx < 12:
+                        formatted_date = f"{day_int}{suffix} {months[m_idx]}, {y}"
+            except Exception:
+                pass
+        elif raw_date and len(raw_date) >= 4:
+            year_str = raw_date[-4:]
+
         fixed_text = field.get("fixed_text") or field.get("custom_text")
         if fixed_text:
             val = fixed_text
             val = val.replace("{{name}}", str(field_data.get("name", "Participant")))
+            val = val.replace("{{participant_name}}", str(field_data.get("name", "Participant")))
             val = val.replace("{{certificate_id}}", str(cert_id or field_data.get("certificate_id", "")))
-            val = val.replace("{{event}}", str(field_data.get("event_name", field_data.get("event", ""))))
-            val = val.replace("{{date}}", str(field_data.get("issue_date", field_data.get("date", ""))))
+            val = val.replace("{{event}}", event_str)
+            val = val.replace("{{event_name}}", event_str)
+            val = val.replace("{{date}}", formatted_date or raw_date)
+            val = val.replace("{{issue_date}}", formatted_date or raw_date)
+            val = val.replace("{{raw_date}}", raw_date)
+            val = val.replace("{{year}}", year_str or "2026")
             for k, v in field_data.items():
                 val = val.replace(f"{{{{{k}}}}}", str(v))
             text_val = val
         elif field_key == "certificate_id":
             text_val = cert_id
+        elif field_key in ["event", "event_name"]:
+            text_val = event_str
+        elif field_key in ["date", "issue_date"]:
+            text_val = formatted_date or raw_date
         elif field_key in field_data:
             text_val = str(field_data[field_key])
         else:
@@ -166,7 +214,10 @@ def render_single_certificate(
         italic = field.get("italic", False)
 
         rl_font = "Helvetica"
-        if "times" in font_family.lower() or "serif" in font_family.lower():
+        ff_lower = font_family.lower()
+        if any(term in ff_lower for term in ["great", "vibe", "script", "calligraph", "cursive"]):
+            rl_font = "GreatVibes"
+        elif "times" in ff_lower or "serif" in ff_lower:
             if bold and italic:
                 rl_font = "Times-BoldItalic"
             elif bold:
@@ -175,7 +226,7 @@ def render_single_certificate(
                 rl_font = "Times-Italic"
             else:
                 rl_font = "Times-Roman"
-        elif "courier" in font_family.lower() or "mono" in font_family.lower():
+        elif "courier" in ff_lower or "mono" in ff_lower:
             if bold and italic:
                 rl_font = "Courier-BoldOblique"
             elif bold:
@@ -202,13 +253,15 @@ def render_single_certificate(
         except Exception:
             c.setFillColor(colors.black)
 
+        # Vertical centering adjustment for font baseline
+        y_draw = y_pt - (font_size * 0.28)
         align = field.get("align", "center")
         if align == "center":
-            c.drawCentredString(x_pt, y_pt, text_val)
+            c.drawCentredString(x_pt, y_draw, text_val)
         elif align == "right":
-            c.drawRightString(x_pt, y_pt, text_val)
+            c.drawRightString(x_pt, y_draw, text_val)
         else:
-            c.drawString(x_pt, y_pt, text_val)
+            c.drawString(x_pt, y_draw, text_val)
 
     c.showPage()
     c.save()
