@@ -55,7 +55,7 @@ const DEFAULT_FIELDS: FieldConfig[] = [
     label: 'Participant Name',
     field_key: 'name',
     fixed_text: '{{name}}',
-    mask_unwanted_text: false,
+    mask_unwanted_text: true,
     mask_width: 50,
     mask_height: 38,
     mask_color: '#FFFFFF',
@@ -69,11 +69,32 @@ const DEFAULT_FIELDS: FieldConfig[] = [
     italic: false,
   },
   {
+    id: 'f_event',
+    label: 'Event Name',
+    field_key: 'event_name',
+    fixed_text: '{{event}}',
+    mask_unwanted_text: true,
+    mask_width: 60,
+    mask_height: 38,
+    mask_color: '#FFFFFF',
+    x: 50,
+    y: 58,
+    font_family: 'Times',
+    font_size: 20,
+    color: '#1E293B',
+    align: 'center',
+    bold: false,
+    italic: false,
+  },
+  {
     id: 'f_date',
     label: 'Issue Date',
     field_key: 'issue_date',
     fixed_text: '{{date}}',
-    mask_unwanted_text: false,
+    mask_unwanted_text: true,
+    mask_width: 28,
+    mask_height: 24,
+    mask_color: '#FFFFFF',
     x: 24,
     y: 78,
     font_family: 'Helvetica',
@@ -449,7 +470,7 @@ export const TemplateEditorStep: React.FC<TemplateEditorStepProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-[var(--text-secondary)]">
-                Automatically detects unwanted placeholder text (e.g. "Participant Name", "John Doe"), erases it, and sets up your dynamic text box.
+                Mask the original name, event, and date, then replace them with roster names and the event details you enter. Choose the closest matching typeface in field settings.
               </p>
             </div>
           </div>
@@ -871,6 +892,7 @@ export const TemplateEditorStep: React.FC<TemplateEditorStepProps> = ({
                       style={{ borderColor: 'var(--border-color)' }}
                     >
                       <option value="Times">Times Roman (Classic Serif)</option>
+                      <option value="GreatVibes">Great Vibes (Script)</option>
                       <option value="Helvetica">Helvetica / Arial (Modern Clean)</option>
                       <option value="Courier">Courier (Digital / Monospace)</option>
                     </select>

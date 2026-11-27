@@ -44,6 +44,11 @@ class FieldConfig(BaseModel):
     is_qr: bool = False
     qr_size: Optional[int] = 80 # px if is_qr
     custom_text: Optional[str] = None
+    fixed_text: Optional[str] = None
+    mask_unwanted_text: bool = False
+    mask_width: Optional[float] = None
+    mask_height: Optional[float] = None
+    mask_color: Optional[str] = None
 
 class TemplateCreate(BaseModel):
     name: str

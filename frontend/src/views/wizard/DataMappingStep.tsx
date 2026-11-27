@@ -46,7 +46,7 @@ export const DataMappingStep: React.FC<DataMappingStepProps> = ({
     const autoMap: Record<string, string> = {};
 
     fields.forEach((f) => {
-      if (f.is_qr || f.field_key === 'certificate_id') return;
+      if (f.is_qr || f.field_key === 'certificate_id' || f.field_key === 'event_name' || f.field_key === 'issue_date') return;
 
       const keyLower = f.field_key.toLowerCase();
       const labelLower = f.label.toLowerCase();
@@ -98,7 +98,11 @@ export const DataMappingStep: React.FC<DataMappingStepProps> = ({
       showToast('Please provide a Project Name', 'error');
       return;
     }
-    onNext(mapping, projectName, eventName, issueDate);
+    if (!eventName.trim() || !issueDate) {
+      showToast('Please provide the event name and certificate issue date', 'error');
+      return;
+    }
+    onNext(mapping, projectName, eventName.trim(), issueDate);
   };
 
   return (
@@ -181,9 +185,12 @@ export const DataMappingStep: React.FC<DataMappingStepProps> = ({
             </span>
           </div>
 
+          <p className="text-[11px] text-[var(--text-muted)]">
+            Participant names come from the mapped upload. Event name and issue date are set above and will replace their template text.
+          </p>
           <div className="space-y-3">
             {fields
-              .filter((f) => !f.is_qr && f.field_key !== 'certificate_id')
+              .filter((f) => !f.is_qr && f.field_key !== 'certificate_id' && f.field_key !== 'event_name' && f.field_key !== 'issue_date')
               .map((f) => {
                 const currentVal = mapping[f.field_key] || '';
                 const isAutoMapped = Boolean(currentVal);

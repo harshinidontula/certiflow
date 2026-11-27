@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "GreatVibes";
+  src: url("/fonts/GreatVibes-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+
 @layer base {
   :root, [data-theme="light"] {
     --bg-canvas: #f8fafc;

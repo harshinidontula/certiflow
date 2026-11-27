@@ -67,6 +67,8 @@ def generate_batch(
 
         # Apply user column mappings
         for cert_field_key, dataset_col in mapping_config.items():
+            if cert_field_key in {"event_name", "issue_date"}:
+                continue
             if dataset_col in raw_data:
                 field_values[cert_field_key] = raw_data[dataset_col]
 

@@ -7,10 +7,16 @@ from typing import List, Dict, Any, Tuple
 from PIL import Image
 import qrcode
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.colors import HexColor
 from reportlab.lib import colors
 from pypdf import PdfReader, PdfWriter
 from database import CERTIFICATES_DIR, EXPORTS_DIR
+
+GREAT_VIBES_FONT_PATH = os.path.join(os.path.dirname(__file__), "..", "fonts", "GreatVibes-Regular.ttf")
+if os.path.exists(GREAT_VIBES_FONT_PATH):
+    pdfmetrics.registerFont(TTFont("GreatVibes", GREAT_VIBES_FONT_PATH))
 
 def generate_unique_certificate_id() -> str:
     short_uuid = uuid.uuid4().hex[:6].upper()
@@ -166,7 +172,9 @@ def render_single_certificate(
         italic = field.get("italic", False)
 
         rl_font = "Helvetica"
-        if "times" in font_family.lower() or "serif" in font_family.lower():
+        if font_family.lower() == "greatvibes" and "GreatVibes" in pdfmetrics.getRegisteredFontNames():
+            rl_font = "GreatVibes"
+        elif "times" in font_family.lower() or "serif" in font_family.lower():
             if bold and italic:
                 rl_font = "Times-BoldItalic"
             elif bold:
